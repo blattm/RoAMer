@@ -100,7 +100,14 @@ class Orchestrator:
             else:
                 self.send_output(results)
         except Exception as e:
+            debug_data = f"EXCEPTION from client:\n{traceback.format_exc()}"
+            try: 
+                with open(os.path.join(self.userPath, "roamer.log"), "r") as f_log:
+                    log = "\n"+f_log.read()
+            except Exception:
+                log = "NOT AVAILABLE"
+            debug_data += "\nLOG: " + log
             if not self.isLocalUnpacking:
-                self.send_output(f"EXCEPTION from client:\n{traceback.format_exc()}")
+                self.send_output(debug_data)
             else:
-                print(traceback.format_exc())
+                print(debug_data)
