@@ -141,6 +141,8 @@ def run_task(task, partial_config, logging_handler):
     
     importlib.invalidate_caches()
     loaded_base_config = importlib.reload(importlib.import_module(task["config"]))
+    loaded_base_config = json.loads(json.dumps(FakeConfig(loaded_base_config)), object_hook=objdict)
+    apply_overrides(loaded_base_config, task["config_overrides"])
     config = appy_partial_on_base_config(loaded_base_config, partial_config)
     roamer = RoAMer(config, task["headless"], task["vm"], task["snapshot"], task["ident"])
     roamer.run(task["sample"], output_folder=task["output_folder"])
@@ -149,7 +151,37 @@ def run_task(task, partial_config, logging_handler):
         logger = logging.getLogger(logger_name)
         logger.removeHandler(logging_handler)
 
-class FakeConfig:
+def apply_overrides(config, overrides):
+    for override in overrides:
+        key, value = override.split("=")
+        object = config
+        keyparts = key.split(".")
+        for i in range(len(keyparts)):
+            try:
+                keyparts[i] =  int(keyparts[i])
+            except ValueError:
+                pass
+        for keypart in keyparts[:-1]:
+            object = object[keypart]
+        object[keyparts[-1]] = json.loads(value)
+
+class objdict(dict):
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        if name in self:
+            del self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
+
+class FakeConfig(objdict):
     def __init__(self, input_config):
         for key in input_config.__dict__.keys():
             if not key.startswith("__") and key.isupper():
@@ -165,13 +197,15 @@ def partial_from_base_config(base_config):
     return partial
 
 def appy_partial_on_base_config(base, partial):
-    new_config = FakeConfig(base)
+    # new_config = FakeConfig(base)
+    new_config = base
     new_config.VM_CONTROLLER = partial["VM_CONTROLLER"]
     new_config.VM_NAME = partial["VM_NAME"]
     new_config.SNAPSHOT_NAME = partial["SNAPSHOT_NAME"]
     new_config.UNPACKER_CONFIG["host_port"] = partial["host_port"]
     new_config.UNPACKER_CONFIG["guest_ip"] = partial["guest_ip"]
     return new_config
+
 
 
 class WorkerHandler:
@@ -660,7 +694,7 @@ def shutdown_server(connection, force=False, finish_queue=False):
     )
 
 
-def unpack_samples(samples, config, headless, ident, output_folder, block, priority, unroamered_only):
+def unpack_samples(samples, config, config_overrides, headless, ident, output_folder, block, priority, unroamered_only):
     with connect_to_server() as connection: # might throw
         if output_folder is not None:
             output_folder = os.path.abspath(output_folder)
@@ -669,6 +703,7 @@ def unpack_samples(samples, config, headless, ident, output_folder, block, prior
             "task": "unpack",
             "sample": None,
             "config": config,
+            "config_overrides": config_overrides,
             "headless": headless,
             "vm": "",
             "snapshot": "",
@@ -750,6 +785,7 @@ if __name__ == "__main__":
     send_parser = subparsers.add_parser("unpack")
     send_parser.add_argument('Samples', metavar='Sample', nargs="+", type=str, help='Path to sample or folder of samples')
     send_parser.add_argument('--config', action='store', help="Which config shall be used?", default=WORKER_BASE_CONFIG)
+    send_parser.add_argument('--config-overrides', '--co', action='store', nargs="*", default=[], help="e.g. UNPACKER_CONFIG.parameters.0.monitoring_intervals=10")
     send_parser.add_argument('--no-headless', action='store_false', help='Start the Sandbox in headless mode', dest="headless")
     send_parser.add_argument('--ident', action="store", help="Configure an identifier for the output.", default="")
     send_parser.add_argument('--output', action="store", help="Specify a custom output folder for the dumps", default=None)
@@ -776,7 +812,7 @@ if __name__ == "__main__":
     if args.action == "server":
         start_server_safe()
     elif args.action == "unpack":
-        unpack_samples(args.Samples, args.config, args.headless, args.ident, args.output, args.block, args.first, getattr(args, "continue"))
+        unpack_samples(args.Samples, args.config, args.config_overrides, args.headless, args.ident, args.output, args.block, args.first, getattr(args, "continue"))
     elif args.action == "monitor":
         with connect_to_server() as connection: # might throw
             monitor_ids(connection, list( args.job_ids))
