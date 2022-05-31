@@ -138,8 +138,9 @@ def run_task(task, partial_config, logging_handler):
     for logger_name in loggers:
         logger = logging.getLogger(logger_name)
         logger.addHandler(logging_handler)
-
-    loaded_base_config = importlib.import_module(task["config"])
+    
+    importlib.invalidate_caches()
+    loaded_base_config = importlib.reload(importlib.import_module(task["config"]))
     config = appy_partial_on_base_config(loaded_base_config, partial_config)
     roamer = RoAMer(config, task["headless"], task["vm"], task["snapshot"], task["ident"])
     roamer.run(task["sample"], output_folder=task["output_folder"])
