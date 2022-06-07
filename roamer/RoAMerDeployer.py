@@ -47,7 +47,7 @@ def ExecuteDeployerTasks(roamer_config, tasks, headless, vm, snapshot, ident, ke
 
     try:
         tasks.remove("all")
-        tasks += ["unpacker", "receiver", "whitelister", "whitelist", "bootstrap"]
+        tasks += ["unpacker", "receiver", "whitelister", "whitelist", "bootstrap", "hooks"]
     except ValueError:
         pass
     
@@ -74,6 +74,8 @@ def ExecuteDeployerTasks(roamer_config, tasks, headless, vm, snapshot, ident, ke
                 prod_subtasks.update(["whitelister_bin_to_client", "whitelist", "reinit_and_store"])
         elif task=="bootstrap":
             build_subtasks.update(["compile_on_client", "overwrite_updater"])
+        elif task=="hooks":
+            build_subtasks.update(["compile_hooks_on_client", "overwrite_hooks"])
         else:
             LOG.error("Unknown task %s, Exiting", task)
             return
@@ -115,7 +117,7 @@ class Deployer:
         else: 
             files_to_send["main.exe"] = "updater/bin/updater.exe"
 
-        if "compile_on_client" in self.tasks:
+        if "compile_on_client" in self.tasks or "compile_hooks_on_client" in self.tasks:
             files_to_send["roamer.zip"] = "roamer.zip"
 
         if "receiver_bin_to_client" in self.tasks:
@@ -170,6 +172,7 @@ class Deployer:
         LOG.info("waiting for needed files...")
         needed = sock.recv(1024 * 1024)
         print(needed)
+        LOG.info("send: " + ", ".join(unpacker_files.keys()))
         LOG.info("start sending")
         sock.sendall(bytes(json.dumps(unpacker_files), encoding="utf-8"))
         sock.shutdown(socket.SHUT_WR)
@@ -204,7 +207,7 @@ class Deployer:
 
     def deploy(self):
 
-        if "compile_on_client" in self.tasks:
+        if "compile_on_client" in self.tasks or "compile_hooks_on_client" in self.tasks:
             LOG.info("Zipping repo %s", self.source_folder)
             zip_folder(self.source_folder)
 
@@ -213,7 +216,7 @@ class Deployer:
         self.prepare_vm()
         self.communicate_with_receiver_force_send(updater_files)
 
-        if "compile_on_client" in self.tasks:
+        if "compile_on_client" in self.tasks or "compile_hooks_on_client" in self.tasks:
             remove_zip(self.source_folder)
         
         returned_raw_data = self.communicate_with_updater()
@@ -261,6 +264,14 @@ class Deployer:
                     shutil.copyfile(os.path.join(self.source_folder, "updater", "bin", "update_launcher.exe"), os.path.join(self.source_folder, "updater", "bin", "update_launcher_backup.exe"))
                 shutil.copyfile(os.path.join(results_folder, "update_launcher"), os.path.join(self.source_folder, "updater", "bin", "update_launcher.exe"))
                 shutil.copyfile(os.path.join(results_folder, "updater"), os.path.join(self.source_folder, "updater", "bin", "updater.exe"))
+            
+            if "overwrite_hooks" in self.tasks:
+                LOG.info("Overwriting hooks in roamer/bin with received data")
+                for hookfile in os.listdir(results_folder):
+                    if not hookfile.startswith("hook_"):
+                        pass
+                    shutil.copyfile(os.path.join(results_folder, hookfile), os.path.join(self.source_folder, "roamer", "bin", hookfile))
+
         else:
             LOG.warning("No Data was send by the updater!")
         time.sleep(2)

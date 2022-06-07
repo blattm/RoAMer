@@ -1,5 +1,6 @@
 import argparse
 import base64
+from distutils.cmd import Command
 import json
 import time
 import zipfile
@@ -76,6 +77,18 @@ class Updater:
         compile_process = subprocess.Popen(self.roamerRepoPath+"\\compile.bat", cwd=self.roamerRepoPath)
         compile_process.wait()
 
+    def compile_hooks(self):
+        VS_PATH = r"C:\Program Files\Microsoft Visual Studio\2022\Community"
+        DEV_SHELL_RELATIVE = r"Common7\Tools\VsDevCmd.bat"
+        DEV_SHELL_PATH = os.path.join(VS_PATH, DEV_SHELL_RELATIVE)
+        COMPILE_SCRIPT_PATH = self.roamerRepoPath+"\\compile_hooks.bat"
+        logging.info(f"Compile Hooks with {DEV_SHELL_PATH}:")
+        command = f"cmd /c \"\"{DEV_SHELL_PATH}\" & cd {self.roamerRepoPath} & {COMPILE_SCRIPT_PATH}\""
+        compile_process = subprocess.Popen(command, cwd=VS_PATH)
+        #print(compile_process.communicate(COMPILE_SCRIPT_PATH+"\r\nexit\r\n"))
+        compile_process.wait()
+
+
     def restart_receiver(self, clear_screen=True):
         logging.info("Restart the Receiver")
         send_keycode(0x0D) # Enter
@@ -141,6 +154,12 @@ class Updater:
             })
         if "whitelist" in self.tasks:
             result["pe_header_whitelist.json"] = self._get_content_of_file_as_base64(self.userPath+"pe_header_whitelist.json")
+        if "compile_hooks_on_client" in self.tasks:
+            hook_folder = os.path.join(self.roamerRepoPath, "hooks", "bin.X64")
+            for hook in os.listdir(hook_folder):
+                if not hook.endswith(".dll"):
+                    continue
+                result[f"hook_{hook}"] = self._get_content_of_file_as_base64(os.path.join(hook_folder, hook))
 
         if len(result) != 0: 
             self.send_output(result)
@@ -168,12 +187,17 @@ class Updater:
             self.send_output("RUNNING")
 
         try:
-            if "compile_on_client" in self.tasks:
+            if "compile_on_client" in self.tasks or "compile_hooks_on_client" in self.tasks:
                 self.extract_source()
+                strict_cleanup_list += [self.roamerRepoPath, self.roamerZipPath]
+
+            if "compile_on_client" in self.tasks:
                 self.compile_source()
                 receiver_source_path = self.roamerRepoPath+"\\receiver\\dist\\main.exe"
                 whitelister_source_path = self.roamerRepoPath+"\\whitelister\\dist\\PEHeaderWhitelister.exe"
-                strict_cleanup_list += [self.roamerRepoPath, self.roamerZipPath]
+            
+            if "compile_hooks_on_client" in self.tasks:
+                self.compile_hooks()
             
             if "receiver_bin_to_client" in self.tasks:
                 receiver_source_path = self.userPath+"new_receiver.exe"
