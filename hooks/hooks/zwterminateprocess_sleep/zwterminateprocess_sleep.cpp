@@ -7,12 +7,12 @@
     #include <stdio.h>
 #endif
 
-static BOOL (WINAPI * TrueZwTerminateProcess)(HANDLE hProcess, NTSTATUS ExitStatus) = ZwTerminateProcess;
+static BOOL (WINAPI * TrueZwTerminateProcess)(HANDLE hProcess, NTSTATUS ExitStatus) = (BOOL (WINAPI *)(HANDLE, NTSTATUS))GetProcAddress(GetModuleHandleA("ntdll.dll"),"ZwTerminateProcess");
 
 BOOL WINAPI ZwTerminateProcessSleep(HANDLE hProcess, NTSTATUS ExitStatus)
 {
     hProcess;
-    uExitCode;
+    ExitStatus;
     #if DEBUG
         printf("Intercepted Process termination");
     #endif
