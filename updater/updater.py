@@ -78,13 +78,13 @@ class Updater:
         compile_process.wait()
 
     def compile_hooks(self):
-        VS_PATH = r"C:\Program Files\Microsoft Visual Studio\2022\Community"
-        DEV_SHELL_RELATIVE = r"Common7\Tools\VsDevCmd.bat"
-        DEV_SHELL_PATH = os.path.join(VS_PATH, DEV_SHELL_RELATIVE)
-        COMPILE_SCRIPT_PATH = self.roamerRepoPath+"\\compile_hooks.bat"
-        logging.info(f"Compile Hooks with {DEV_SHELL_PATH}:")
-        command = f"cmd /c \"\"{DEV_SHELL_PATH}\" & cd {self.roamerRepoPath} & {COMPILE_SCRIPT_PATH}\""
-        compile_process = subprocess.Popen(command, cwd=VS_PATH)
+        vs_path = self.config["client_paths"]["vs_path"]
+        dev_shell_relative = self.config["client_paths"]["dev_shell_relative_to_vs_path"]
+        dev_shell_path = os.path.join(vs_path, dev_shell_relative)
+        compile_script_path = self.roamerRepoPath+"\\compile_hooks.bat"
+        logging.info(f"Compile Hooks with {dev_shell_path}:")
+        command = f"cmd /c \"\"{dev_shell_path}\" & cd {self.roamerRepoPath} & {compile_script_path}\""
+        compile_process = subprocess.Popen(command, cwd=vs_path)
         #print(compile_process.communicate(COMPILE_SCRIPT_PATH+"\r\nexit\r\n"))
         compile_process.wait()
 
