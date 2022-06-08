@@ -7,9 +7,9 @@
     #include <stdio.h>
 #endif
 
-static BOOL (WINAPI * TrueZwTerminateProcess)(HANDLE hProcess, UINT uExitCode) = ZwTerminateProcess;
+static BOOL (WINAPI * TrueZwTerminateProcess)(HANDLE hProcess, NTSTATUS ExitStatus) = ZwTerminateProcess;
 
-BOOL WINAPI ZwTerminateProcessSleep(HANDLE hProcess, UINT uExitCode)
+BOOL WINAPI ZwTerminateProcessSleep(HANDLE hProcess, NTSTATUS ExitStatus)
 {
     hProcess;
     uExitCode;
