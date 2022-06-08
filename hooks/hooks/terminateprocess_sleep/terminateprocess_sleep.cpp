@@ -16,7 +16,7 @@ BOOL WINAPI TerminateProcessSleep(HANDLE hProcess, UINT uExitCode)
     #if DEBUG
         printf("Intercepted Process termination");
     #endif
-    //Sleep(0);
+    Sleep(-1);
     return true;
 }
 

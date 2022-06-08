@@ -15,7 +15,7 @@ void WINAPI ExitProcessSleep(UINT uExitCode)
     #if DEBUG
         printf("Intercepted ExitProcess");
     #endif
-    Sleep(0);
+    Sleep(-1);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
