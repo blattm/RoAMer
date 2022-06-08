@@ -7,9 +7,9 @@
     #include <stdio.h>
 #endif
 
-static BOOL (WINAPI * TrueTerminateProcess)(HANDLE hProcess, UINT uExitCode) = TerminateProcess;
+static BOOL (WINAPI * TrueZwTerminateProcess)(HANDLE hProcess, UINT uExitCode) = ZwTerminateProcess;
 
-BOOL WINAPI TerminateProcessSleep(HANDLE hProcess, UINT uExitCode)
+BOOL WINAPI ZwTerminateProcessSleep(HANDLE hProcess, UINT uExitCode)
 {
     hProcess;
     uExitCode;
@@ -34,24 +34,24 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
         DetourRestoreAfterWith();
 
         #if DEBUG
-            printf("terminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
+            printf("zwterminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
                 " Starting.\n");
             fflush(stdout);
         #endif
 
         DetourTransactionBegin();
         DetourUpdateThread(GetCurrentThread());
-        DetourAttach(&(PVOID&)TrueTerminateProcess, TerminateProcessSleep);
+        DetourAttach(&(PVOID&)TrueZwTerminateProcess, ZwTerminateProcessSleep);
         error = DetourTransactionCommit();
 
         #if DEBUG
             if (error == NO_ERROR) {
-                printf("terminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
-                    " Detoured TerminateProcess().\n");
+                printf("zwterminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
+                    " Detoured ZwTerminateProcess().\n");
             }
             else {
-                printf("terminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
-                    " Error detouring TerminateProcess(): %ld\n", error);
+                printf("zwterminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
+                    " Error detouring ZwTerminateProcess(): %ld\n", error);
             }
         #endif
 
@@ -59,12 +59,12 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
     else if (dwReason == DLL_PROCESS_DETACH) {
         DetourTransactionBegin();
         DetourUpdateThread(GetCurrentThread());
-        DetourDetach(&(PVOID&)TrueTerminateProcess, TerminateProcessSleep);
+        DetourDetach(&(PVOID&)TrueZwTerminateProcess, ZwTerminateProcessSleep);
         error = DetourTransactionCommit();
 
         #if DEBUG
-            printf("terminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
-                " Removed TerminateProcess() (result=%ld).\n", error);
+            printf("zwterminateprocess_sleep" DETOURS_STRINGIFY(DETOURS_BITS) ".dll:"
+                " Removed ZwTerminateProcess() (result=%ld).\n", error);
             fflush(stdout);
         #endif
 
