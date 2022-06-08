@@ -8,49 +8,6 @@
 ##  Copyright (c) Microsoft Corporation.  All rights reserved.
 ##
 
-# !include ..\common.mak
-
-# LIBS=$(LIBS) kernel32.lib
-
-# all: dirs \
-#     $(BIND)\sleep_max_3.exe \
-# !IF $(DETOURS_SOURCE_BROWSING)==1
-#     $(OBJD)\sleep_max_3.bsc \
-# !ENDIF
-#     option
-
-# ##############################################################################
-
-# clean:
-#     -del *~ 2>nul
-#     -del $(BIND)\sleep_max_3.* 2>nul
-#     -rmdir /q /s $(OBJD) 2>nul
-
-# realclean: clean
-#     -rmdir /q /s $(OBJDS) 2>nul
-
-# ##############################################################################
-
-# dirs:
-#     @if not exist $(BIND) mkdir $(BIND) && echo.   Created $(BIND)
-#     @if not exist $(OBJD) mkdir $(OBJD) && echo.   Created $(OBJD)
-
-# $(OBJD)\sleep_max_3.obj : sleep_max_3.cpp
-
-# $(BIND)\sleep_max_3.exe : $(OBJD)\sleep_max_3.obj $(DEPS)
-#     cl $(CFLAGS) /Fe$@ /Fd$(@R).pdb $(OBJD)\sleep_max_3.obj \
-#         /link $(LINKFLAGS) $(LIBS) /subsystem:console \
-#         /export:DetourFinishHelperProcess,@1,NONAME \
-#         /export:SleepExMax3 \
-
-# $(OBJD)\sleep_max_3.bsc : $(OBJD)\sleep_max_3.obj
-#     bscmake /v /n /o $@ $(OBJD)\sleep_max_3.sbr
-
-
-
-
-
-
 
 !include ..\common.mak
 
