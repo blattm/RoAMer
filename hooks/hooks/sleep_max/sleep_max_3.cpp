@@ -11,9 +11,7 @@ static DWORD (WINAPI * TrueSleepEx)(DWORD dwMilliseconds, BOOL bAlertable) = Sle
 static void (WINAPI * TrueSleep)(DWORD dwMilliseconds) = Sleep;
 
 DWORD mapTime(DWORD dwMilliseconds){
-    DWORD bypass_mask = 0xFFFF;
-    DWORD bypass_key = 0xCAFE;
-    if ((dwMilliseconds & bypass_mask) == bypass_key){
+    if (dwMilliseconds == 0xFFFFFFFF){
         return dwMilliseconds;
     }
     return min(dwMilliseconds, 3000);
