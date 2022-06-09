@@ -78,15 +78,17 @@ class Updater:
         compile_process.wait()
 
     def compile_hooks(self):
-        vs_path = self.config["client_paths"]["vs_path"]
-        dev_shell_relative = self.config["client_paths"]["dev_shell_relative_to_vs_path"]
-        dev_shell_path = os.path.join(vs_path, dev_shell_relative)
         compile_script_path = self.roamerRepoPath+"\\compile_hooks.bat"
-        logging.info(f"Compile Hooks with {dev_shell_path}:")
-        command = f"cmd /c \"\"{dev_shell_path}\" & cd {self.roamerRepoPath} & {compile_script_path}\""
-        compile_process = subprocess.Popen(command, cwd=vs_path)
-        #print(compile_process.communicate(COMPILE_SCRIPT_PATH+"\r\nexit\r\n"))
-        compile_process.wait()
+        vs_path = self.config["client_paths"]["vs_path"]
+
+        for arch in ["86", "64"]:
+            dev_shell_relative = self.config["client_paths"][f"dev_shell_x{arch}_relative_to_vs_path"]
+            dev_shell_path = os.path.join(vs_path, dev_shell_relative)
+            logging.info(f"Compile x{arch}hooks with {dev_shell_path}:")
+            command_inner = f"SET DETOURS_TARGET_PROCESSOR=X{arch}& CALL \"{dev_shell_path}\" & cd {self.roamerRepoPath} & {compile_script_path}"
+            command = f"cmd /c \"{command_inner}\""
+            compile_process = subprocess.Popen(command, cwd=vs_path)
+            compile_process.wait()
 
 
     def restart_receiver(self, clear_screen=True):

@@ -198,9 +198,9 @@ def read_memory(process_handle, address, size):
         return b""
 
 
-def place_hook_in_registry(path_to_hook, path_to_registry):
+def place_hooks_in_registry(path_to_hooks, path_to_registry):
     registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path_to_registry, 0, winreg.KEY_WRITE)
-    winreg.SetValueEx(registry_key, "AppInit_DLLs", 0, winreg.REG_SZ, path_to_hook)
+    winreg.SetValueEx(registry_key, "AppInit_DLLs", 0, winreg.REG_SZ, ",".join(path_to_hooks))
     winreg.SetValueEx(registry_key, "LoadAppInit_DLLs", 0, winreg.REG_DWORD, 1)
     winreg.SetValueEx(registry_key, "RequireSignedAppInit_DLLs", 0, winreg.REG_DWORD, 0)
     winreg.CloseKey(registry_key)
@@ -266,11 +266,19 @@ def getUserPath():
 
 def prepareOperatingSystem(config, userPath):
     if config["hook32"]:
-        logging.info("placing hook for 32bit processes")
-        place_hook_in_registry(userPath + config["hook32"], "SOFTWARE\\Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows")
+        if isinstance(config["hook32"], str):
+            path_to_hooks = [userPath + config["hook32"]] # Fallback in case old format is used
+        else:
+            path_to_hooks = [userPath + hookname for hookname in config["hook32"]]
+        logging.info("placing hook(s) for 32bit processes")
+        place_hooks_in_registry(path_to_hooks, "SOFTWARE\\Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows")
     if config["hook64"]:
-        logging.info("placing hook for 64bit processes")
-        place_hook_in_registry(userPath + config["hook64"], "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows")
+        if isinstance(config["hook64"], str):
+            path_to_hooks = [userPath + config["hook64"]] # Fallback in case old format is used
+        else:
+            path_to_hooks = [userPath + hookname for hookname in config["hook64"]]
+        logging.info("placing hook(s) for 64bit processes")
+        place_hooks_in_registry(path_to_hooks, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows")
 
 
 def startAsLibrary(samplePath):

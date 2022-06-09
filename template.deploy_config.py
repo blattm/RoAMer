@@ -13,7 +13,8 @@ BUILD_INSTANCE = {
         "to_whitelist": "C:\\", #used to create whitelist
         # Next two entries only required for deploying hooks
         "vs_path": r"C:\Program Files\Microsoft Visual Studio\2022\Community", # Path of Visual Studio
-        "dev_shell_relative_to_vs_path":  r"Common7\Tools\VsDevCmd.bat",       # Path of the Developer Console relative to vs_path 
+        "dev_shell_x86_relative_to_vs_path":  r"VC\Auxiliary\Build\vcvars32.bat",       # Path of the 32bit Developer Console relative to vs_path 
+        "dev_shell_x64_relative_to_vs_path":  r"VC\Auxiliary\Build\vcvars64.bat",       # Path of the 64bit Developer Console relative to vs_path 
     },
 
     "host_ip": '192.168.56.1',
@@ -41,7 +42,8 @@ PROD_INSTANCE = {
         "to_whitelist": "C:\\", #used to create whitelist
         # Next two entries only required for deploying hooks
         "vs_path": r"C:\Program Files\Microsoft Visual Studio\2022\Community", # Path of Visual Studio
-        "dev_shell_relative_to_vs_path":  r"Common7\Tools\VsDevCmd.bat",       # Path of the Developer Console relative to vs_path 
+        "dev_shell_x86_relative_to_vs_path":  r"VC\Auxiliary\Build\vcvars32.bat",       # Path of the 32bit Developer Console relative to vs_path 
+        "dev_shell_x64_relative_to_vs_path":  r"VC\Auxiliary\Build\vcvars64.bat",       # Path of the 64bit Developer Console relative to vs_path 
     },
 
     "host_ip": '192.168.56.1',
