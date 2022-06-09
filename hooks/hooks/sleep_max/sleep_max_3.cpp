@@ -25,7 +25,7 @@ DWORD WINAPI SleepExMax3(DWORD dwMilliseconds, BOOL bAlertable)
 
     DWORD timeToSleep = mapTime(dwMilliseconds);
     #if DEBUG
-        printf("Requested Time: %ld. Sleep Time: %ld", dwMilliseconds, timeToSleep);
+        printf("Requested Time: %ld. Sleep Time: %ld\n", dwMilliseconds, timeToSleep);
     #endif
     return TrueSleepEx(timeToSleep, bAlertable);
 }
@@ -34,7 +34,7 @@ void WINAPI SleepMax3(DWORD dwMilliseconds)
 {
     DWORD timeToSleep = mapTime(dwMilliseconds);
     #if DEBUG
-        printf("Requested Time: %ld. Sleep Time: %ld", dwMilliseconds, timeToSleep);
+        printf("Requested Time: %ld. Sleep Time: %ld\n", dwMilliseconds, timeToSleep);
     #endif
     TrueSleep(timeToSleep);
 }

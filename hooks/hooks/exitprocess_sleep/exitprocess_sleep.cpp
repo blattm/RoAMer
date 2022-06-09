@@ -13,7 +13,7 @@ void WINAPI ExitProcessSleep(UINT uExitCode)
 {
     uExitCode;
     #if DEBUG
-        printf("Intercepted ExitProcess");
+        printf("Intercepted ExitProcess\n");
     #endif
     Sleep(0xFFFFCAFE);
 }
