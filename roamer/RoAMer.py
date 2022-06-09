@@ -7,6 +7,7 @@ import time
 
 from roamer.DumpPersister import persist_data
 from roamer.VmController import VmController
+from whitelister.PeHeaderHasher import get_hashed_header_from_file
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)-15s %(message)s")
@@ -32,14 +33,20 @@ class RoAMer:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return sock
 
-    def gather_files_for_unpacker(self, sample_name):
+    def gather_files_for_unpacker_and_whitelist(self, sample_name):
         unpacker_files = {}
         unpacker_files["sample"] = self._get_content_of_file_as_base64(sample_name)
-        unpacker_files["config"] = self._to_base64(bytes(json.dumps(self.unpacker_config), encoding="utf-8"))
         unpacker_files["unpacker"] = {}
         for root, _, filenames in os.walk(self.bins):
             for filename in filenames:
-                unpacker_files["unpacker"][filename] = self._get_content_of_file_as_base64(os.path.join(root, filename))
+                filepath = os.path.join(root, filename)
+                unpacker_files["unpacker"][filename] = self._get_content_of_file_as_base64(filepath)
+                for parameters in self.unpacker_config["parameters"]:
+                    if filename in parameters["additional_pe_whitelist"]:
+                        parameters["additional_pe_whitelist"][filename].append(get_hashed_header_from_file(filepath))
+                    else:
+                        parameters["additional_pe_whitelist"][filename] = [get_hashed_header_from_file(filepath)]
+        unpacker_files["config"] = self._to_base64(bytes(json.dumps(self.unpacker_config), encoding="utf-8"))
         return unpacker_files
 
     def _to_base64(self, string):
@@ -118,7 +125,7 @@ class RoAMer:
 
     def run_file(self, target_path, output_folder = None):
         LOG.info("Unpacking %s", target_path)
-        unpacker_files = self.gather_files_for_unpacker(target_path)
+        unpacker_files = self.gather_files_for_unpacker_and_whitelist(target_path)
         self.prepare_vm()
         self.communicate_with_receiver(unpacker_files)
         # receive status from unpacker
