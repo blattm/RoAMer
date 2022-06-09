@@ -10,9 +10,20 @@
 static DWORD (WINAPI * TrueSleepEx)(DWORD dwMilliseconds, BOOL bAlertable) = SleepEx;
 static void (WINAPI * TrueSleep)(DWORD dwMilliseconds) = Sleep;
 
+DWORD mapTime(DWORD dwMilliseconds){
+    DWORD bypass_mask = 0xFFFF;
+    DWORD bypass_key = 0xCAFE;
+    if ((dwMilliseconds & bypass_mask) == bypass_key){
+        return dwMilliseconds;
+    }
+    return min(dwMilliseconds, 3000);
+}
+
+
 DWORD WINAPI SleepExMax3(DWORD dwMilliseconds, BOOL bAlertable)
 {
-    DWORD timeToSleep = min(dwMilliseconds,3000);
+
+    DWORD timeToSleep = mapTime(dwMilliseconds);
     #if DEBUG
         printf("Requested Time: %ld. Sleep Time: %ld", dwMilliseconds, timeToSleep);
     #endif
@@ -21,7 +32,7 @@ DWORD WINAPI SleepExMax3(DWORD dwMilliseconds, BOOL bAlertable)
 
 void WINAPI SleepMax3(DWORD dwMilliseconds)
 {
-    DWORD timeToSleep = min(dwMilliseconds,3000);
+    DWORD timeToSleep = mapTime(dwMilliseconds);
     #if DEBUG
         printf("Requested Time: %ld. Sleep Time: %ld", dwMilliseconds, timeToSleep);
     #endif
