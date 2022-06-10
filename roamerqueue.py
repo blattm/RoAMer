@@ -421,8 +421,10 @@ class ClientHandler:
     def handle_messages(self, connection, client_id, message_backlog):
         for message in message_backlog:
             self.onMessage(message, client_id)
-        for message in iter_connection(connection):
-            self.onMessage(message, client_id)
+        with connection as conn:
+            for message in iter_connection(conn):
+                self.onMessage(message, client_id)
+        self.clients.pop(client_id, None)
     
     def run(self):
         while True:
