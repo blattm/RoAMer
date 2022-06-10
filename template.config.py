@@ -15,8 +15,16 @@ UNPACKER_CONFIG = {
     "parameters": [
         {
             "name": "4x5_hook_spoofuser",
-            "hook32": "TP_EM0_sleep.dll",
-            "hook64": 0,
+            "hook32": [
+                "hook_zwterminateprocess_sleep32.dll",
+                # "hook_exitprocess_sleep32.dll",
+                "hook_sleep_max_332.dll",
+            ],
+            "hook64": [
+                "hook_zwterminateprocess_sleep64.dll",
+                # "hook_exitprocess_sleep64.dll",
+                "hook_sleep_max_364.dll",
+            ],
             "monitoring_intervals": 4,
             "monitoring_interval_length": 5,
             "monitoring_switches": [
