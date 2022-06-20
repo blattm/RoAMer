@@ -21,6 +21,7 @@ To run RoAMer you need to have a VirtualBox or KVM environment with a Windows Vi
 
 #### Host System
 * Python3 (virtual) environment (>= v3.6)
+* psutil if you want to use the RoAMer-Queue
 
 ### Compile on Windows VM
 * clone the git repository
@@ -54,9 +55,18 @@ Host:
   `../RoAMer/roamer/bin/main.exe`
 
 ## How To Use
-* Adjust config.py parameters as needed. The default configuration was the most successful as determined by the Thesis' evaluation.
+#### Simple setup without queue
+* Adjust `config.py` parameters as needed. The default configuration was the most successful as determined by the Thesis' evaluation.
 * Just start /run.py <path_to_sample> and RoAMer will then do its magic in the VM and respond with the identified dumps.
  * The script will start the VM with the snapshot you've specified in `config.py`
+
+#### Parallelized setup with queue
+* First, make sure the "simple" setup of RoAMer described above works correctly.
+* Create clones of your RoAMer VM with different IP addresses. These clones and the original VM can later be used in parallel.
+* Use `clone_config.py` to specify all clones to be used (excluding the original VM which is already contained in `config.py`).
+* Start the queue server by running /roamerqueue.py server
+* Add a sample to the queue to be unpacked by executing /roamerqueue.py unpack <path_to_sample>. 
+* RoAMer-Queue comes with a handfull of convenience features. Please refer to the command-line help for more details (e.g. /roamerqueue.py unpack --help or /roamerqueue.py --help )
 
 ## FAQ / Known issues
 #### Why do I have to move the desktop icons away then place a notepad window there?
