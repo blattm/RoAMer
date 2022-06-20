@@ -605,13 +605,14 @@ def get_files(target_path, filter):
 def gather_roamered_files(output_folder, ident):
     filter_set = set()
     search_string = ("_" + ident if ident else "") + "_dumps"
-    for output in os.listdir(output_folder):
-        if not os.path.isdir(os.path.join(output_folder, output)):
-            continue
-        if not search_string in output:
-            continue
-        file_name = output.split(search_string)[0]
-        filter_set.add(file_name) 
+    if os.path.exists(output_folder) and os.path.isdir(output_folder):
+        for output in os.listdir(output_folder):
+            if not os.path.isdir(os.path.join(output_folder, output)):
+                continue
+            if not search_string in output:
+                continue
+            file_name = output.split(search_string)[0]
+            filter_set.add(file_name) 
     return filter_set
 
 
