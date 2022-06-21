@@ -1,5 +1,6 @@
 import argparse
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 import functools
 import io
 from itertools import chain
@@ -217,6 +218,7 @@ class WorkerHandler:
         self.worker_queues = {}
         self.worker_feeder_semaphores = {}
         self.current_worker_tasks = {}
+        self.task_started_time = {}
 
 
     def _get_partial_configs(self):
@@ -249,10 +251,12 @@ class WorkerHandler:
         while True:
             worker_queue.join()
             self.current_worker_tasks[worker_index] = None
+            self.task_started_time[worker_index] = datetime.now(timezone.utc)
             # Workerstate: Idle
             task = self.work_queue.get()
             with semaphore:
                 self.current_worker_tasks[worker_index] = task
+                self.task_started_time[worker_index] = datetime.now(timezone.utc)
                 worker_queue.put(task)
             if task == "STOPWORKER":
                 break
@@ -269,6 +273,7 @@ class WorkerHandler:
             self.workers[i] = p
             self.worker_queues[i] = queue
             self.current_worker_tasks[i] = None
+            self.task_started_time[i] = datetime.now(timezone.utc)
             self.worker_feeder_semaphores[i] = Semaphore()
             Thread(target=self.run_feed_workers, args=(i,)).start()
             #work_queue.put('STOP')
@@ -327,6 +332,7 @@ class WorkerHandler:
                     )
                 time.sleep(0.1)
                 self.current_worker_tasks[worker_index] = "RESTARTING"
+                self.task_started_time[worker_index] = datetime.now(timezone.utc)
                 logging.info(f"Restaring worker {self.partial_configs[worker_index]['VM_NAME']}")
             else:
                 self.worker_feeder_semaphores[worker_index].release()
@@ -341,6 +347,7 @@ class WorkerHandler:
             self.workers[i] = p
             #self.worker_queues[i] = queue
             self.current_worker_tasks[i] = None
+            self.task_started_time[i] = datetime.now(timezone.utc)
             # Thread(target=self.run_feed_workers, args=(i, queue,)).start()
             self.worker_feeder_semaphores[i].release()
                     
@@ -521,6 +528,7 @@ class Server:
                     {
                         "worker_configs": self.worker_handler.partial_configs,
                         "worker_tasks": self.worker_handler.current_worker_tasks,
+                        "worker_start_times": self.worker_handler.task_started_time,
                         "queue": self.worker_handler.work_queue.as_list(),
                     },
                     client_id
@@ -757,9 +765,14 @@ def show_status(connection, file=sys.stdout):
     if message is not None:
         worker_configs = message["worker_configs"]
         worker_tasks = message["worker_tasks"]
+        worker_start_times = message["worker_start_times"]
         print(len(worker_configs), "workers available", file=file)
+        max_worker_name_length = max(len(config["VM_NAME"]) for config in worker_configs)
         for i in range(len(worker_configs)):
-            print(i, worker_configs[i]["VM_NAME"], sep="\t", file=file)
+            worker_name = worker_configs[i]["VM_NAME"]
+            timediff = datetime.now(timezone.utc) - worker_start_times[i]
+            timediff = timedelta(seconds = round(timediff.total_seconds()))
+            print(i, worker_name + "\t" + (max_worker_name_length - len(worker_name))* " ", timediff, sep="\t", file=file)
             job = worker_tasks[i]
             if job is None:
                 job_str = "idle"
